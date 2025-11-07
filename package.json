@@ -15,15 +15,24 @@
   "contributes": {
     "commands": [
       {
-        "command": "riot-web-extension.helloWorld",
-        "title": "Hello World"
+        "command": "riot-web-extension.serial.register",
+        "title": "Register Serial Device"
+      },
+      {
+        "command": "riot-web-extension.serial.remove",
+        "title": "Remove Serial Device"
       }
     ],
     "views": {
       "riot": [
         {
-          "id": "riot-web",
-          "name": "RIOT Web"
+          "id": "riot-web.controlPanel",
+          "name": "Control Panel",
+          "type": "webview"
+        },
+        {
+          "id": "riot-web.devices",
+          "name": "Devices"
         }
       ]
     },

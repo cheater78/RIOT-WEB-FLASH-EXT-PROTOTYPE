@@ -1,27 +1,32 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import {ControlPanelProvider} from "./controlPanelProvider";
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+    if ((navigator as any).serial === undefined) {
+        console.log("Navigator Serial not found");
+        return;
+    }
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "riot-web-extension" is now active in the web extension host!');
+    console.log('RIOT Web Extension activated');
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('riot-web-extension.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
+    context.subscriptions.push(
+        vscode.commands.registerCommand('riot-web-extension.serial.register', async () => {
+            console.log('RIOT Web Extension is registering new Device...');
+            await vscode.commands.executeCommand(
+                "workbench.experimental.requestSerialPort"
+            );
+        })
+    );
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from RIOT Web Extension in a web extension host!');
-	});
-
-	context.subscriptions.push(disposable);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider("riot-web.controlPanel", new ControlPanelProvider())
+    );
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider("riot-web", new ControlPanelProvider())
+    );
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    console.log('RIOT Web Extension deactivated');
+}
