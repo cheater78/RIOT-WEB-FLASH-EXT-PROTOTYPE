@@ -19,10 +19,10 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider("riot-web.controlPanel", new ControlPanelProvider())
+        vscode.window.registerWebviewViewProvider("riot-web.controlPanel", new ControlPanelProvider(context.extensionUri))
     );
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider("riot-web", new ControlPanelProvider())
+        vscode.window.registerWebviewViewProvider("riot-web", new ControlPanelProvider(context.extensionUri))
     );
 }
 

@@ -61,11 +61,7 @@ async function main() {
 	const ctx = await esbuild.context({
 		entryPoints: [
 			'src/web/extension.ts',
-			'src/web/test/suite/extensionTests.ts',
-            {
-                in: "resources/css/styles.css",
-                out: "styles.css"
-            }
+			'src/web/test/suite/extensionTests.ts'
 		],
 		bundle: true,
 		format: 'cjs',
