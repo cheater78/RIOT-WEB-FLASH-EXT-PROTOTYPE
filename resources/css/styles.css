@@ -1,8 +1,0 @@
-button {
-    color: var(--vscode-button-foreground);
-    background-color: var(--vscode-button-background);
-    width: 80%;
-    min-width: 50px;
-    max-width: 400px;
-    border-radius: 3px;
-}

@@ -2,7 +2,7 @@
   "name": "riot-web-extension",
   "displayName": "RIOT Web Extension",
   "description": "flashing riot from a browser",
-  "publisher": "cheater78&Barkolores",
+  "publisher": "Barkolores78",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.105.0"
@@ -15,33 +15,84 @@
   "contributes": {
     "commands": [
       {
-        "command": "riot-web-extension.serial.register",
-        "title": "Register Serial Device"
+        "command": "riot-web.serial.register",
+        "title": "Register Serial Device",
+        "icon": {
+          "dark": "resources/icons/plus-svgrepo-com-light.svg",
+          "light": "resources/icons/plus-svgrepo-com-dark.svg"
+        }
       },
       {
-        "command": "riot-web-extension.serial.remove",
+        "command": "riot-web.serial.remove",
         "title": "Remove Serial Device"
+      },
+      {
+        "command": "riot-web.serial.openTerminal",
+        "title": "Open Terminal",
+        "icon": {
+          "dark": "resources/icons/terminal-svgrepo-com-light.svg",
+          "light": "resources/icons/terminal-svgrepo-com-dark.svg"
+        }
       }
     ],
-    "views": {
-      "riot": [
-        {
-          "id": "riot-web.controlPanel",
-          "name": "Control Panel",
-          "type": "webview"
-        },
-        {
-          "id": "riot-web.devices",
-          "name": "Devices"
-        }
-      ]
-    },
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "riot",
+          "id": "riot-sidebar",
           "title": "RIOT",
-          "icon": "resources/riot-logo/riot-logo-R.svg"
+          "icon": "resources/icons/riot-logo-R.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "riot-panel",
+          "title": "RIOT Serial Terminal",
+          "icon": "resources/icons/riot-logo-R.svg"
+        }
+      ]
+    },
+    "views": {
+      "riot-sidebar": [
+        {
+          "id": "riot-web.serial.devices",
+          "name": "Connected Serial Devices"
+        }
+      ],
+      "riot-panel": [
+        {
+          "id": "riot-web.serial.terminal",
+          "name": "Serial Terminal",
+          "type": "webview"
+        }
+      ]
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "riot-web.serial.remove",
+          "when": "false"
+        },
+        {
+          "command": "riot-web.serial.openTerminal",
+          "when": "false"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "riot-web.serial.register",
+          "group": "navigation",
+          "when": "view == riot-web.serial.devices"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "riot-web.serial.remove",
+          "when": "view == riot-web.serial.devices"
+        },
+        {
+          "command": "riot-web.serial.openTerminal",
+          "when": "view == riot-web.serial.devices",
+          "group": "inline"
         }
       ]
     }
@@ -75,5 +126,8 @@
     "mocha": "^11.7.4",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "esptool-js": "^0.5.7"
   }
 }

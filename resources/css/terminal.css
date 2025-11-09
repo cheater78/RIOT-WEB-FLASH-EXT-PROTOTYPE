@@ -1,0 +1,15 @@
+body {
+    height: 100vh;
+    display: flex;
+    flex-flow: column-reverse;
+    overflow: hidden;
+}
+
+textarea {
+    flex: 1 1 auto;
+    min-height: 2em;
+}
+
+input {
+    flex: 0 0 2em;
+}
