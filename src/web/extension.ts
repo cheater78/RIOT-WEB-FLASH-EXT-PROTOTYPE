@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import {DevicesProvider, type SerialDevice} from "./providers/devicesProvider";
+import {SerialDevice} from "./serial";
+import {DevicesProvider, SerialTreeItem} from "./providers/devicesProvider";
 import {TerminalProvider} from "./providers/terminalProvider";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -10,14 +11,69 @@ export function activate(context: vscode.ExtensionContext) {
 
     console.log('RIOT Web Extension activated');
 
+    vscode.commands.executeCommand('setContext', 'riot-web.openDevice', []);
+
     const devicesProvider = new DevicesProvider();
 
     const terminalProvider = new TerminalProvider(context.extensionUri);
 
-    navigator.serial.addEventListener('connect', () => devicesProvider.refresh());
-    navigator.serial.addEventListener('disconnect', () => devicesProvider.refresh());
+    let devices: SerialDevice[] = [];
 
-    console.log('1');
+    let serialPorts: SerialPort[] = [];
+
+    let deviceIdentifier = 0;
+
+    function updateDevices(add:boolean, index?: number) {
+        if (add) {
+            //add Device
+            navigator.serial.getPorts().then((ports) => {
+                for (const port of ports) {
+                    if (!serialPorts.includes(port)) {
+                        serialPorts.push(port);
+                        devices.push(new SerialDevice(port, deviceIdentifier.toString()));
+                        deviceIdentifier++;
+                        devicesProvider.refresh(devices);
+                    }
+                }
+            });
+        } else {
+            //remove Device
+            if (index !== undefined) {
+                //called through ui
+                serialPorts.splice(index, 1);
+                devices.splice(index, 1)[0].forget();
+                devicesProvider.refresh(devices);
+            } else {
+                //disconnect event
+                navigator.serial.getPorts().then((ports) => {
+                    for (const serialPort of serialPorts) {
+                        const index = ports.indexOf(serialPort);
+                        if (index === -1) {
+                            serialPorts.splice(index, 1);
+                            devices.splice(index, 1);
+                            devicesProvider.refresh(devices);
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    navigator.serial.getPorts().then((ports) => {
+        serialPorts = ports;
+        for (const port of ports) {
+            devices.push(new SerialDevice(port, deviceIdentifier.toString()));
+            deviceIdentifier++;
+        }
+        devicesProvider.refresh(devices);
+    });
+
+    navigator.serial.addEventListener('connect', () => {
+        updateDevices(true);
+    });
+    navigator.serial.addEventListener('disconnect', () => {
+        updateDevices(false);
+    });
 
     //Commands
     context.subscriptions.push(vscode.commands.registerCommand('riot-web.serial.register', async () => {
@@ -26,63 +82,53 @@ export function activate(context: vscode.ExtensionContext) {
                 "workbench.experimental.requestSerialPort"
             );
             if (serialPortInfo) {
-                vscode.window.showInformationMessage(`New Serial Device connected!\nUSBVendorID: ${serialPortInfo.usbVendorId}\nUSBProductID: ${serialPortInfo.usbProductId}`, {modal: true});
-                devicesProvider.refresh();
+                vscode.window.showInformationMessage(`New Serial Device connected!\nUSBVendorID: ${serialPortInfo.usbVendorId}\nUSBProductID: ${serialPortInfo.usbProductId}`);
+                updateDevices(true);
             } else {
-                vscode.window.showErrorMessage('No new Serial Device selected!', {modal: true});
+                vscode.window.showErrorMessage('No new Serial Device selected!');
             }
         })
     );
 
-    context.subscriptions.push(vscode.commands.registerCommand('riot-web.serial.remove', (serialDevice: SerialDevice) => {
+    context.subscriptions.push(vscode.commands.registerCommand('riot-web.serial.remove', (serialTreeItem: SerialTreeItem) => {
         console.log('RIOT Web Extension is removing Device...');
-        serialDevice.port.close();
-        serialDevice.port.forget();
-        devicesProvider.refresh();
+        updateDevices(false, serialTreeItem.index);
     }));
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('riot-web.serial.openTerminal', () => {
-//             vscode.window.createTerminal({
-//                 name: 'Hallo',
-//                 pty: new class implements vscode.Pseudoterminal {
-//                     onDidWrite: vscode.Event<string> = () => {return new vscode.EventEmitter();};
-//                     onDidOverrideDimensions?: vscode.Event<vscode.TerminalDimensions | undefined> | undefined;
-//                     onDidClose?: vscode.Event<number | void> | undefined;
-//                     onDidChangeName?: vscode.Event<string> | undefined;
-//                     open(initialDimensions: vscode.TerminalDimensions | undefined): void {
-//                         throw new Error("Method not implemented.");
-//                     }
-//                     close(): void {
-//                         throw new Error("Method not implemented.");
-//                     }
-//                     handleInput?(data: string): void {
-//                         throw new Error("Method not implemented.");
-//                     }
-//                     setDimensions?(dimensions: vscode.TerminalDimensions): void {
-//                         throw new Error("Method not implemented.");
-//                     }
-// }
-//             });
-            vscode.commands.executeCommand('riot-web.serial.terminal.focus');
-            terminalProvider.postMessage({message:"Haosda"});
+        vscode.commands.registerCommand('riot-web.serial.clearTerminal', () => {
+            terminalProvider.postMessage({action: "clearTerminal"});
         })
     );
 
+    context.subscriptions.push(vscode.commands.registerCommand('riot-web.serial.openTerminal', async (serialTreeItem: SerialTreeItem) => {
+        await devices[serialTreeItem.index].open(115200);
+        terminalProvider.setDevice(devices[serialTreeItem.index]);
+        vscode.commands.executeCommand('riot-web.serial.terminal.focus');
+        terminalProvider.postMessage({action: "showTerminal"});
+        devices[serialTreeItem.index].read(terminalProvider);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('riot-web.serial.closeTerminal', (serialTreeItem: SerialTreeItem) => {
+        devices[serialTreeItem.index].close();
+        terminalProvider.setDevice();
+        terminalProvider.postMessage({action: "hideTerminal"});
+        terminalProvider.postMessage({action: "clearTerminal"});
+    }));
+
+
+
     //Views
-
-    context.subscriptions.push(
-        vscode.window.registerTreeDataProvider("riot-web.serial.devices", devicesProvider)
-    );
-
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider("riot-web.serial.terminal", terminalProvider, {webviewOptions: {retainContextWhenHidden: true}})
     );
 
-    console.log('ende');
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider("riot-web.serial.devices", devicesProvider)
+    );
 }
 
-// This method is called when your extension is deactivated
+
 export function deactivate() {
     console.log('RIOT Web Extension deactivated');
 }

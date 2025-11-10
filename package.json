@@ -33,6 +33,18 @@
           "dark": "resources/icons/terminal-svgrepo-com-light.svg",
           "light": "resources/icons/terminal-svgrepo-com-dark.svg"
         }
+      },
+      {
+        "command": "riot-web.serial.clearTerminal",
+        "title": "Clear Serial Terminal"
+      },
+      {
+        "command": "riot-web.serial.closeTerminal",
+        "title": "Close Serial Terminal",
+        "icon": {
+          "dark": "resources/icons/cross-svgrepo-com-light.svg",
+          "light": "resources/icons/cross-svgrepo-com-dark.svg"
+        }
       }
     ],
     "viewsContainers": {
@@ -75,6 +87,14 @@
         {
           "command": "riot-web.serial.openTerminal",
           "when": "false"
+        },
+        {
+          "command": "riot-web.serial.clearTerminal",
+          "when": "false"
+        },
+        {
+          "command": "riot-web.serial.closeTerminal",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -91,8 +111,19 @@
         },
         {
           "command": "riot-web.serial.openTerminal",
-          "when": "view == riot-web.serial.devices",
+          "when": "view == riot-web.serial.devices && (viewItem not in riot-web.openDevice)",
           "group": "inline"
+        },
+        {
+          "command": "riot-web.serial.closeTerminal",
+          "when": "view == riot-web.serial.devices && (viewItem in riot-web.openDevice)",
+          "group": "inline"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "riot-web.serial.clearTerminal",
+          "when": "webviewId == riot-web.serial.terminal"
         }
       ]
     }

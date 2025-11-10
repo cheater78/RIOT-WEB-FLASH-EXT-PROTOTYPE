@@ -1,37 +1,40 @@
 import * as vscode from "vscode";
+import {SerialDevice} from "../serial";
 
 export class DevicesProvider implements vscode.TreeDataProvider<SerialDevice> {
+    private _devices?: SerialDevice[];
+
     getTreeItem(element: vscode.TreeItem | Thenable<vscode.TreeItem>) {
         return element;
     }
 
     getChildren(element?: any): vscode.ProviderResult<any[]> {
-        return navigator.serial.getPorts().then((ports) => {
-            let treeItems: SerialDevice[] = [];
-            for (const port of ports) {
-                treeItems.push(
-                    new SerialDevice('Device: ' + port.getInfo().usbVendorId + '|' + port.getInfo().usbProductId, vscode.TreeItemCollapsibleState.None, port)
-                );
-            }
-            return Promise.resolve(treeItems);
-        });
+        if (element || !this._devices) {
+            return;
+        }
+        let result: vscode.TreeItem[] = [];
+        for (let i = 0; i < this._devices.length; i++) {
+            result.push(new SerialTreeItem(this._devices[i].label, this._devices[i].contextValue, i));
+        }
+        return Promise.resolve(result);
     }
 
     private _onDidChangeTreeData: vscode.EventEmitter<SerialDevice | undefined> = new vscode.EventEmitter<SerialDevice | undefined>();
 
     readonly onDidChangeTreeData: vscode.Event<SerialDevice | undefined> = this._onDidChangeTreeData.event;
 
-    refresh(): void {
+    refresh(devices: SerialDevice[]): void {
+        this._devices = devices;
         this._onDidChangeTreeData.fire(undefined);
     }
 }
 
-export class SerialDevice extends vscode.TreeItem {
+export class SerialTreeItem extends vscode.TreeItem {
     constructor(
         public readonly label: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-        public readonly port: SerialPort
+        public readonly contextValue: string,
+        public readonly index: number,
     ) {
-        super(label, collapsibleState);
+        super(label, vscode.TreeItemCollapsibleState.None);
     }
 }
