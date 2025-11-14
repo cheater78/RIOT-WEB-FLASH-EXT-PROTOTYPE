@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import {SerialDevice} from "../serial";
+import {Device} from "../devices/device";
 
-export class DevicesProvider implements vscode.TreeDataProvider<SerialDevice> {
-    private _devices?: SerialDevice[];
+export class DevicesProvider implements vscode.TreeDataProvider<Device> {
+    private _devices?: Device[];
 
     getTreeItem(element: vscode.TreeItem | Thenable<vscode.TreeItem>) {
         return element;
@@ -11,30 +11,17 @@ export class DevicesProvider implements vscode.TreeDataProvider<SerialDevice> {
     getChildren(element?: any): vscode.ProviderResult<any[]> {
         if (element || !this._devices) {
             return;
+        } else {
+            return Promise.resolve(this._devices);
         }
-        let result: vscode.TreeItem[] = [];
-        for (let i = 0; i < this._devices.length; i++) {
-            result.push(new SerialTreeItem(this._devices[i].label, this._devices[i].contextValue, i));
-        }
-        return Promise.resolve(result);
     }
 
-    private _onDidChangeTreeData: vscode.EventEmitter<SerialDevice | undefined> = new vscode.EventEmitter<SerialDevice | undefined>();
+    private _onDidChangeTreeData: vscode.EventEmitter<Device | undefined> = new vscode.EventEmitter<Device | undefined>();
 
-    readonly onDidChangeTreeData: vscode.Event<SerialDevice | undefined> = this._onDidChangeTreeData.event;
+    readonly onDidChangeTreeData: vscode.Event<Device | undefined> = this._onDidChangeTreeData.event;
 
-    refresh(devices: SerialDevice[]): void {
+    refresh(devices: Device[]): void {
         this._devices = devices;
         this._onDidChangeTreeData.fire(undefined);
-    }
-}
-
-export class SerialTreeItem extends vscode.TreeItem {
-    constructor(
-        public readonly label: string,
-        public readonly contextValue: string,
-        public readonly index: number,
-    ) {
-        super(label, vscode.TreeItemCollapsibleState.None);
     }
 }

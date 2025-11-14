@@ -1,4 +1,4 @@
-import vscode, {env} from "vscode";
+import vscode from "vscode";
 
 export class FileProvider {
 

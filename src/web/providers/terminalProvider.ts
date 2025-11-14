@@ -1,18 +1,18 @@
 import * as vscode from "vscode";
-import {SerialDevice} from "../serial";
+import {Device} from "../devices/device";
 
-export class TerminalProvider implements vscode.WebviewViewProvider {
+export class TerminalProvider implements vscode.WebviewViewProvider, RiotTerminal {
     constructor(private readonly basePath: vscode.Uri) {
-        this._currentTerminalState = TerminalState.NONE;
+        this._currentTerminalState = RiotTerminalState.NONE;
     }
 
     private _webviewView?: vscode.WebviewView;
 
-    private _device?: SerialDevice;
+    private _device?: Device;
 
-    private _currentTerminalState: TerminalState;
+    private _currentTerminalState: RiotTerminalState;
 
-    setDevice(device?: SerialDevice) {
+    setDevice(device?: Device) {
         this._device = device;
     }
 
@@ -33,7 +33,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    setTerminalState(newTerminalState: TerminalState) {
+    setTerminalState(newTerminalState: RiotTerminalState) {
         this._currentTerminalState = newTerminalState;
         if (this._webviewView !== undefined) {
             this._webviewView.webview.postMessage({
@@ -108,8 +108,14 @@ export class TerminalProvider implements vscode.WebviewViewProvider {
     }
 }
 
-export enum TerminalState {
+export enum RiotTerminalState {
     NONE= "none",
     COMMUNICATION = "communication",
     FLASH = "flash"
+}
+
+export interface RiotTerminal {
+    postMessage(message: string): void;
+    clearTerminal(): void;
+    setTerminalState(terminalState: RiotTerminalState): void;
 }

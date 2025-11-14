@@ -1,36 +1,34 @@
 import vscode from "vscode";
-import {TerminalProvider} from "./providers/terminalProvider";
+import {Device} from "./device";
 import {ESPLoader, FlashOptions, LoaderOptions, Transport} from "esptool-js";
+import {RiotTerminal} from "../providers/terminalProvider";
 
-export class SerialDevice {
-    public _open: boolean;
+export class SerialDevice extends Device {
+
     private _reader?: ReadableStreamDefaultReader<string>;
     private _readableStreamClosed?: Promise<void>;
     private readonly _encoder = new TextEncoder();
-    public readonly label:string;
-    private _flashing: boolean;
     private _transport?: Transport;
 
     constructor(
-        private readonly _port: SerialPort,
-        public readonly contextValue: string,
+        port: SerialPort,
+        contextValue: string,
     ) {
-        this.label = 'Device: ' + _port.getInfo().usbVendorId + '|' + _port.getInfo().usbProductId;
-        this._open = false;
-        this._flashing = false;
+        super(port, 'Device: ' + port.getInfo().usbVendorId + '|' + port.getInfo().usbProductId, contextValue);
     }
-
-    async open(baudrate: number) {
+    comparePort(port: SerialPort): boolean {
+        return port === this._port;
+    }
+    async open(param: SerialOptions): Promise<void> {
         if (!this._open) {
-            await this._port.open({baudRate: baudrate}).then(() => {
+            await this._port.open(param).then(() => {
                 console.log('Connected to ' + this.label);
                 this._open = true;
                 vscode.commands.executeCommand('setContext', 'riot-web.openDevice', [this.contextValue]);
             });
         }
     }
-
-    async close() {
+    async close(): Promise<void> {
         if (this._reader) {
             this._reader.cancel();
             await this._readableStreamClosed?.catch(() => {console.log('Read canceled');});
@@ -43,24 +41,11 @@ export class SerialDevice {
             });
         }
     }
-
-    forget() {
+    forget(): void {
         this.close();
         this._port.forget().then(() => console.log('Forgot ' + this.label));
     }
-
-    write(message: string) {
-        if (this._open) {
-            const writer = this._port.writable?.getWriter();
-            if (writer === undefined) {
-                return;
-            }
-            writer.write(this._encoder.encode(message)).then(() => console.log('Wrote Message: ' + message + ' to ' + this.label));
-            writer.releaseLock();
-        }
-    }
-
-    async read(terminal: TerminalProvider) {
+    async read(terminal: RiotTerminal): Promise<void> {
         if (this._open) {
             const decoder = new TextDecoderStream();
             //@ts-ignore
@@ -78,26 +63,33 @@ export class SerialDevice {
             }
         }
     }
-
+    write(message: string): void {
+        if (this._open) {
+            const writer = (this._port as SerialPort).writable?.getWriter();
+            if (writer === undefined) {
+                return;
+            }
+            writer.write(this._encoder.encode(message)).then(() => console.log('Wrote Message: ' + message + ' to ' + this.label));
+            writer.releaseLock();
+        }
+    }
+    async flash(options: {
+        loaderOptions: LoaderOptions,
+        flashOptions: FlashOptions,
+    }): Promise<void> {
+        if (!this._open) {
+            options.loaderOptions.transport = new Transport(this._port as SerialPort);
+            const espLoader: ESPLoader = new ESPLoader(options.loaderOptions);
+            await espLoader.main().then(value => console.log(value)).catch(e => console.error(e));
+            await espLoader.writeFlash(options.flashOptions).then(() => console.log('Programming Done')).catch(e => console.error(e));
+            await espLoader.after();
+            await espLoader.transport.disconnect();
+        }
+    }
     getTransport() {
         if (this._transport) {
             return this._transport;
         }
-        return new Transport(this._port);
-    }
-
-    freeTransport() {
-        this._transport?.disconnect();
-    }
-
-    async flash(loaderOptions: LoaderOptions, flashOptions: FlashOptions) {
-        if (!this._open) {
-            loaderOptions.transport = new Transport(this._port);
-            const espLoader: ESPLoader = new ESPLoader(loaderOptions);
-            await espLoader.main().then(value => console.log(value)).catch(e => console.error(e));
-            await espLoader.writeFlash(flashOptions).then(() => console.log('Programming Done')).catch(e => console.error(e));
-            await espLoader.after();
-            await espLoader.transport.disconnect();
-        }
+        return new Transport(this._port as SerialPort);
     }
 }
