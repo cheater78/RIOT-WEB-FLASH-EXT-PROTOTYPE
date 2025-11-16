@@ -24,7 +24,7 @@ export class SerialDevice extends Device {
             await this._port.open(param).then(() => {
                 console.log('Connected to ' + this.label);
                 this._open = true;
-                vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', [this.contextValue]);
+                vscode.commands.executeCommand('riot-web-extension.context.connect', this.contextValue);
             });
         }
     }
@@ -41,7 +41,7 @@ export class SerialDevice extends Device {
             this._port.close().then(() => {
                 console.log('Connection to ' + this.label + ' closed');
                 this._open = false;
-                vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', 'none');
+                vscode.commands.executeCommand('riot-web-extension.context.disconnect', this.contextValue);
             });
         }
     }
@@ -83,14 +83,14 @@ export class SerialDevice extends Device {
     }): Promise<void> {
         if (!this._open) {
             this._flashing = true;
-            vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', [this.contextValue]);
+            vscode.commands.executeCommand('riot-web-extension.context.connect', this.contextValue);
             options.loaderOptions.transport = new Transport(this._port as SerialPort);
             const espLoader: ESPLoader = new ESPLoader(options.loaderOptions);
             await espLoader.main().then(value => console.log(value)).catch(e => console.error(e));
             await espLoader.writeFlash(options.flashOptions).then(() => console.log('Programming Done')).catch(e => console.error(e));
             await espLoader.after();
             await espLoader.transport.disconnect();
-            vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', 'none');
+            vscode.commands.executeCommand('riot-web-extension.context.disconnect', this.contextValue);
             this._flashing = false;
         }
     }

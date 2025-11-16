@@ -33,8 +33,22 @@ export class TerminalProvider implements vscode.WebviewViewProvider, RiotTermina
                 inputData: ""
             });
         } else {
-            //replace flash terminal
-            //TODO
+            this._webviewView?.webview.postMessage({
+                action: 'updateDevice',
+                uuid: device.contextValue,
+                terminalState: terminalState,
+            });
+            for (let i = 0; i < this._webviewState.devices.length; i++) {
+                if (this._webviewState.devices[i].uuid === device.contextValue) {
+                    this._webviewState.devices[i] = {
+                        ...this._webviewState.devices[i],
+                        terminalState: terminalState,
+                        terminalData: "",
+                        inputData: "",
+                    };
+                    break;
+                }
+            }
         }
     }
 
@@ -174,8 +188,8 @@ function getHTML(css: vscode.Uri, webviewState: string) {
                             device.terminalData = '';
                             break;
                         }
-                        terminal.value = ''
                     }
+                    terminal.value = ''
                     break;
                 case "message":
                     for (const device of currentState.devices) {
@@ -223,8 +237,24 @@ function getHTML(css: vscode.Uri, webviewState: string) {
                     if (currentState.devices.length === 0) {
                         document.body.className = "none"
                     }
-                    console.log(currentState);
                     break;
+                case "updateDevice":
+                    for (let i = 0; i < currentState.devices.length; i++) {
+                        if (currentState.devices[i].uuid === event.data.uuid) {
+                            currentState.devices[i] = new Object({
+                                    ...currentState.devices[i],
+                                    terminalState: event.data.terminalState,
+                                    terminalData: "",
+                                    inputData: "",
+                                });
+                            break;
+                        }
+                    }
+                   if (currentState.selectedTab === event.data.uuid) {
+                       terminal.value = '';
+                       input.value = '';
+                       tabContent.className = event.data.terminalState
+                   } 
             }
         })
         

@@ -24,7 +24,9 @@ export function activate(context: vscode.ExtensionContext) {
     navigator.serial.addEventListener('disconnect', (event) => {
         deviceManager.handleDisconnectEvent(event.target as SerialPort);
     });
-    vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', 'none');
+    let openDevices: string[] = [];
+    vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevices', []);
+    vscode.commands.executeCommand('setContext', 'riot-web-extension.flashingDevices', []);
 
     //Commands
     context.subscriptions.push(
@@ -125,7 +127,23 @@ export function activate(context: vscode.ExtensionContext) {
                 loaderOptions: loaderOptions,
                 flashOptions: flashOptions
             });
-        })
+        }),
+        //context connect
+        vscode.commands.registerCommand('riot-web-extension.context.connect', (contextValue: string) => {
+            openDevices = [
+                ...openDevices,
+                contextValue
+            ];
+            vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevices', openDevices);
+        }),
+        //context disconnect
+        vscode.commands.registerCommand('riot-web-extension.context.disconnect', (contextValue: string) => {
+            const index = openDevices.indexOf(contextValue);
+            if (index !== -1) {
+                openDevices.splice(index, 1);
+                vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevices', openDevices);
+            }
+        }),
     );
 
 

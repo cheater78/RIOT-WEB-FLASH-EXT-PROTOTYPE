@@ -16,7 +16,7 @@
     "commands": [
       {
         "command": "riot-web-extension.serial.add",
-        "title": "Register Serial Device",
+        "title": "Add Serial Device",
         "icon": {
           "dark": "resources/icons/plus-svgrepo-com-light.svg",
           "light": "resources/icons/plus-svgrepo-com-dark.svg"
@@ -53,6 +53,14 @@
           "dark": "resources/icons/cross-svgrepo-com-light.svg",
           "light": "resources/icons/cross-svgrepo-com-dark.svg"
         }
+      },
+      {
+        "command": "riot-web-extension.context.connect",
+        "title": "Connect"
+      },
+      {
+        "command": "riot-web-extension.context.disconnect",
+        "title": "Disconnect"
       }
     ],
     "viewsContainers": {
@@ -107,6 +115,14 @@
         {
           "command": "riot-web-extension.terminal.close",
           "when": "false"
+        },
+        {
+          "command": "riot-web-extension.context.connect",
+          "when": "false"
+        },
+        {
+          "command": "riot-web-extension.context.disconnect",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -123,17 +139,17 @@
         },
         {
           "command": "riot-web-extension.terminal.openCommunication",
-          "when": "view == riot-web-extension.view.devices && (viewItem not in riot-web-extension.openDevice)",
+          "when": "view == riot-web-extension.view.devices && (viewItem not in riot-web-extension.openDevices)",
           "group": "inline"
         },
         {
           "command": "riot-web-extension.serial.flash",
-          "when": "view == riot-web-extension.view.devices && (viewItem not in riot-web-extension.openDevice)",
+          "when": "view == riot-web-extension.view.devices && (viewItem not in riot-web-extension.openDevices)",
           "group": "inline"
         },
         {
           "command": "riot-web-extension.terminal.close",
-          "when": "view == riot-web-extension.view.devices && (viewItem in riot-web-extension.openDevice)",
+          "when": "view == riot-web-extension.view.devices && (viewItem in riot-web-extension.openDevices)",
           "group": "inline"
         }
       ],
