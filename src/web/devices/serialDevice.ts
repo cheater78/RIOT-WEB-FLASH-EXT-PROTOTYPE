@@ -24,11 +24,15 @@ export class SerialDevice extends Device {
             await this._port.open(param).then(() => {
                 console.log('Connected to ' + this.label);
                 this._open = true;
-                vscode.commands.executeCommand('setContext', 'riot-web.openDevice', [this.contextValue]);
+                vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', [this.contextValue]);
             });
         }
     }
     async close(): Promise<void> {
+        if (this._flashing) {
+            vscode.window.showErrorMessage(this.label + ' is currently flashing. Please wait until flashing is completed.');
+            return;
+        }
         if (this._reader) {
             this._reader.cancel();
             await this._readableStreamClosed?.catch(() => {console.log('Read canceled');});
@@ -37,7 +41,7 @@ export class SerialDevice extends Device {
             this._port.close().then(() => {
                 console.log('Connection to ' + this.label + ' closed');
                 this._open = false;
-                vscode.commands.executeCommand('setContext', 'riot-web.openDevice', 'none');
+                vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', 'none');
             });
         }
     }
@@ -54,7 +58,7 @@ export class SerialDevice extends Device {
             while (true) {
                 const {value, done} = await this._reader.read();
                 if (value) {
-                    terminal.postMessage(value);
+                    terminal.postMessage(this.contextValue, value);
                 }
                 if (done || !value) {
                     this._reader.releaseLock();
@@ -78,12 +82,16 @@ export class SerialDevice extends Device {
         flashOptions: FlashOptions,
     }): Promise<void> {
         if (!this._open) {
+            this._flashing = true;
+            vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', [this.contextValue]);
             options.loaderOptions.transport = new Transport(this._port as SerialPort);
             const espLoader: ESPLoader = new ESPLoader(options.loaderOptions);
             await espLoader.main().then(value => console.log(value)).catch(e => console.error(e));
             await espLoader.writeFlash(options.flashOptions).then(() => console.log('Programming Done')).catch(e => console.error(e));
             await espLoader.after();
             await espLoader.transport.disconnect();
+            vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', 'none');
+            this._flashing = false;
         }
     }
     getTransport() {

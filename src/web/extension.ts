@@ -5,7 +5,7 @@ import {DevicesProvider} from "./providers/devicesProvider";
 import {Device} from "./devices/device";
 import {SerialDevice} from "./devices/serialDevice";
 import {DeviceManager} from "./devices/deviceManager";
-import {TerminalProvider, RiotTerminalState} from "./providers/terminalProvider";
+import {RiotTerminalState, TerminalProvider} from "./providers/terminalProvider";
 
 export function activate(context: vscode.ExtensionContext) {
     if ((navigator as any).serial === undefined) {
@@ -24,12 +24,12 @@ export function activate(context: vscode.ExtensionContext) {
     navigator.serial.addEventListener('disconnect', (event) => {
         deviceManager.handleDisconnectEvent(event.target as SerialPort);
     });
-    vscode.commands.executeCommand('setContext', 'riot-web.openDevice', 'none');
+    vscode.commands.executeCommand('setContext', 'riot-web-extension.openDevice', 'none');
 
     //Commands
     context.subscriptions.push(
         //add new Device
-        vscode.commands.registerCommand('riot-web.serial.register', async () => {
+        vscode.commands.registerCommand('riot-web-extension.serial.add', async () => {
             console.log('RIOT Web Extension is registering new Device...');
             const serialPortInfo: SerialPortInfo = await vscode.commands.executeCommand(
                 "workbench.experimental.requestSerialPort"
@@ -41,41 +41,42 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage('No new Serial Device selected!');
             }
         }),
+
         //remove Device
-        vscode.commands.registerCommand('riot-web.serial.remove', (device: Device) => {
+        vscode.commands.registerCommand('riot-web-extension.serial.remove', (device: Device) => {
             console.log('RIOT Web Extension is removing Device...');
             deviceManager.removeDevice(device);
         }),
+
         //clear Terminal
-        vscode.commands.registerCommand('riot-web.serial.clearTerminal', () => {
+        vscode.commands.registerCommand('riot-web-extension.terminal.clear', () => {
             terminalProvider.clearTerminal();
         }),
+
         //open Terminal for Communication
-        vscode.commands.registerCommand('riot-web.serial.openCommunicationTerminal', async (device: Device) => {
+        vscode.commands.registerCommand('riot-web-extension.terminal.openCommunication', async (device: Device) => {
             if (!(device instanceof SerialDevice)) {
                 return;
             }
             await device.open({
                 baudRate: 115200
             });
-            terminalProvider.setDevice(device);
-            terminalProvider.setTerminalState(RiotTerminalState.COMMUNICATION);
-            vscode.commands.executeCommand('riot-web.serial.terminal.focus');
+            terminalProvider.addDevice(device, RiotTerminalState.COMMUNICATION);
             device.read(terminalProvider);
         }),
+
         //close Terminal
-        vscode.commands.registerCommand('riot-web.serial.closeTerminal', async (device: Device) => {
+        vscode.commands.registerCommand('riot-web-extension.terminal.close', async (device: Device) => {
             await device.close();
-            terminalProvider.setDevice();
-            terminalProvider.setTerminalState(RiotTerminalState.NONE);
+            terminalProvider.removeDevice(device);
         }),
+
         //flash Device
-        vscode.commands.registerCommand('riot-web.serial.flash', async (device: Device) => {
+        vscode.commands.registerCommand('riot-web-extension.serial.flash', async (device: Device) => {
             if (!(device instanceof SerialDevice)) {
                 return;
             }
-            terminalProvider.setTerminalState(RiotTerminalState.FLASH);
-            vscode.commands.executeCommand('riot-web.serial.terminal.focus');
+            terminalProvider.addDevice(device, RiotTerminalState.FLASH);
             const json = await fileProvider.loadJson(vscode.Uri.joinPath(context.extensionUri, 'flash', 'flasherArgs.json')) as FlasherArgsJson;
             const loaderOptions: LoaderOptions = {
                 transport: device.getTransport(),
@@ -85,10 +86,10 @@ export function activate(context: vscode.ExtensionContext) {
                         terminalProvider.clearTerminal();
                     },
                     write(data: string) {
-                        terminalProvider.postMessage(data);
+                        terminalProvider.postMessage(device.contextValue, data);
                     },
                     writeLine(data: string) {
-                        terminalProvider.postMessage(data + '\n');
+                        terminalProvider.postMessage(device.contextValue, data + '\n');
                     }
                 },
                 debugLogging: true
@@ -127,10 +128,12 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+
+
     //Views
     context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider("riot-web.serial.terminal", terminalProvider, {webviewOptions: {retainContextWhenHidden: true}}),
-        vscode.window.registerTreeDataProvider("riot-web.serial.devices", devicesProvider)
+        vscode.window.registerWebviewViewProvider("riot-web-extension.view.terminal", terminalProvider, {webviewOptions: {retainContextWhenHidden: true}}),
+        vscode.window.registerTreeDataProvider("riot-web-extension.view.devices", devicesProvider)
     );
 
 

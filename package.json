@@ -5,7 +5,7 @@
   "publisher": "Barkolores78",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.105.0"
+    "vscode": "^1.106.0"
   },
   "categories": [
     "Other"
@@ -15,7 +15,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "riot-web.serial.register",
+        "command": "riot-web-extension.serial.add",
         "title": "Register Serial Device",
         "icon": {
           "dark": "resources/icons/plus-svgrepo-com-light.svg",
@@ -23,11 +23,11 @@
         }
       },
       {
-        "command": "riot-web.serial.remove",
+        "command": "riot-web-extension.serial.remove",
         "title": "Remove Serial Device"
       },
       {
-        "command": "riot-web.serial.openCommunicationTerminal",
+        "command": "riot-web-extension.terminal.openCommunication",
         "title": "Open Communication Terminal",
         "icon": {
           "dark": "resources/icons/terminal-svgrepo-com-light.svg",
@@ -35,7 +35,7 @@
         }
       },
       {
-        "command": "riot-web.serial.flash",
+        "command": "riot-web-extension.serial.flash",
         "title": "Flash Device",
         "icon": {
           "dark": "resources/icons/upload-minimalistic-svgrepo-com-light.svg",
@@ -43,11 +43,11 @@
         }
       },
       {
-        "command": "riot-web.serial.clearTerminal",
-        "title": "Clear Serial Terminal"
+        "command": "riot-web-extension.terminal.clear",
+        "title": "Clear Terminal"
       },
       {
-        "command": "riot-web.serial.closeTerminal",
+        "command": "riot-web-extension.terminal.close",
         "title": "Close Terminal",
         "icon": {
           "dark": "resources/icons/cross-svgrepo-com-light.svg",
@@ -66,7 +66,7 @@
       "panel": [
         {
           "id": "riot-panel",
-          "title": "RIOT Serial Terminal",
+          "title": "RIOT Terminal",
           "icon": "resources/icons/riot-logo-R.svg"
         }
       ]
@@ -74,14 +74,14 @@
     "views": {
       "riot-sidebar": [
         {
-          "id": "riot-web.serial.devices",
-          "name": "Connected Serial Devices"
+          "id": "riot-web-extension.view.devices",
+          "name": "Connected Devices"
         }
       ],
       "riot-panel": [
         {
-          "id": "riot-web.serial.terminal",
-          "name": "Serial Terminal",
+          "id": "riot-web-extension.view.terminal",
+          "name": "Riot Terminal",
           "type": "webview"
         }
       ]
@@ -89,95 +89,100 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "riot-web.serial.remove",
+          "command": "riot-web-extension.serial.remove",
           "when": "false"
         },
         {
-          "command": "riot-web.serial.openCommunicationTerminal",
+          "command": "riot-web-extension.terminal.openCommunication",
           "when": "false"
         },
         {
-          "command": "riot-web.serial.flash",
+          "command": "riot-web-extension.serial.flash",
           "when": "false"
         },
         {
-          "command": "riot-web.serial.clearTerminal",
+          "command": "riot-web-extension.terminal.clear",
           "when": "false"
         },
         {
-          "command": "riot-web.serial.closeTerminal",
+          "command": "riot-web-extension.terminal.close",
           "when": "false"
         }
       ],
       "view/title": [
         {
-          "command": "riot-web.serial.register",
+          "command": "riot-web-extension.serial.add",
           "group": "navigation",
-          "when": "view == riot-web.serial.devices"
+          "when": "view == riot-web-extension.view.devices"
         }
       ],
       "view/item/context": [
         {
-          "command": "riot-web.serial.remove",
-          "when": "view == riot-web.serial.devices"
+          "command": "riot-web-extension.serial.remove",
+          "when": "view == riot-web-extension.view.devices"
         },
         {
-          "command": "riot-web.serial.openCommunicationTerminal",
-          "when": "view == riot-web.serial.devices && (viewItem not in riot-web.openDevice)",
+          "command": "riot-web-extension.terminal.openCommunication",
+          "when": "view == riot-web-extension.view.devices && (viewItem not in riot-web-extension.openDevice)",
           "group": "inline"
         },
         {
-          "command": "riot-web.serial.flash",
-          "when": "view == riot-web.serial.devices && (viewItem not in riot-web.openDevice)",
+          "command": "riot-web-extension.serial.flash",
+          "when": "view == riot-web-extension.view.devices && (viewItem not in riot-web-extension.openDevice)",
           "group": "inline"
         },
         {
-          "command": "riot-web.serial.closeTerminal",
-          "when": "view == riot-web.serial.devices && (viewItem in riot-web.openDevice)",
+          "command": "riot-web-extension.terminal.close",
+          "when": "view == riot-web-extension.view.devices && (viewItem in riot-web-extension.openDevice)",
           "group": "inline"
         }
       ],
       "webview/context": [
         {
-          "command": "riot-web.serial.clearTerminal",
-          "when": "webviewId == riot-web.serial.terminal && riot-web.openDevice != none"
+          "command": "riot-web-extension.terminal.clear",
+          "when": "webviewId == riot-web-extension.view.terminal && riot-web-extension.openDevice != 'none'"
         }
       ]
     }
   },
   "scripts": {
     "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/extensionTests.js",
-    "pretest": "npm run compile-web",
-    "vscode:prepublish": "npm run package-web",
     "compile-web": "npm run check-types && npm run lint && node esbuild.js",
+    "compile-web-production": "npm run check-types && npm run lint && node esbuild.js --production",
     "watch-web": "npm-run-all -p watch-web:*",
     "watch-web:esbuild": "node esbuild.js --watch",
     "watch-web:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package-web": "npm run check-types && npm run lint && node esbuild.js --production",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. ."
+    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. .",
+    "package": "vsce package --allow-missing-repository"
   },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@types/assert": "^1.5.11",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.10.1",
-    "@types/vscode": "^1.105.0",
+    "@types/vscode": "^1.106.0",
     "@types/w3c-web-serial": "^1.0.8",
     "@types/w3c-web-usb": "^1.0.13",
-    "@typescript-eslint/eslint-plugin": "^8.45.0",
-    "@typescript-eslint/parser": "^8.45.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
     "@vscode/test-web": "^0.0.74",
+    "@vscode/vsce": "^3.7.0",
     "assert": "^2.1.0",
-    "esbuild": "^0.25.10",
-    "eslint": "^9.36.0",
+    "esbuild": "^0.25.12",
+    "eslint": "^9.39.1",
     "glob": "^11.0.3",
-    "mocha": "^11.7.4",
+    "mocha": "^11.7.5",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "esptool-js": "^0.5.7"
+  },
+  "overrides": {
+    "@vscode/vsce": {
+      "js-yaml": "^4.1.1"
+    }
   }
 }
