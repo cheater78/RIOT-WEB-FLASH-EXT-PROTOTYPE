@@ -111,6 +111,14 @@ export class TerminalProvider implements vscode.WebviewViewProvider, RiotTermina
                         }
                         break;
                     }
+                    case "updateInput":
+                        for (const device of this._webviewState.devices) {
+                            if (device.uuid === message.uuid) {
+                                device.inputData = message.input;
+                                break;
+                            }
+                        }
+                        break;
                 }
             },
         );
@@ -228,7 +236,7 @@ function getHTML(css: vscode.Uri, webviewState: string) {
                 createTab(currentState.devices[i].uuid, currentState.devices[i].label, selected)
                 if (selected) j = i;
             }
-            if (j) {
+            if (j !== undefined) {
                 terminal.value = currentState.devices[j].terminalData;
                 input.value = currentState.devices[j].inputData;
                 tabContent.className = currentState.devices[j].terminalState
@@ -277,6 +285,11 @@ function getHTML(css: vscode.Uri, webviewState: string) {
                     break;
                 }
             }
+            vscode.postMessage({
+                action: 'updateInput',
+                uuid: currentState.selectedTab,
+                input: input.value
+            })
         }
         
         function sendInput() {
