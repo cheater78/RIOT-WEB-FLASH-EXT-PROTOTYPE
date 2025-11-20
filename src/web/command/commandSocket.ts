@@ -5,21 +5,30 @@ export type Command = {
     data: object
 };
 
+function toSocketAddress(location: Location): string {
+    const protocol: string = (location.protocol === "http") ? "ws" : "wss";
+    const port: string = "1337";
+
+    if(location.hostname === "") {
+        //TODO: for production use only
+        return `${protocol}://localhost:${port}`;
+        return "";
+    }
+    return `${protocol}://${location.hostname}:${port}`;
+}
+
 export class CommandSocket {
     private _socket: WebSocket | undefined;
 
     constructor(
-        socketHost: string = "localhost"
+        socketLocation: Location
     ) {
-        const protocol: string = "ws";
-        const port: string = "1337";
-        
-        if(socketHost === "") {
+        const socketAdress = toSocketAddress(socketLocation);
+        if(socketAdress === "") {
             vscode.window.showWarningMessage("No Host detected! CommandSocket not connected!");
             return;
         }
 
-        const socketAdress: string = `${protocol}://${socketHost}:${port}`;
         this._socket = new WebSocket(socketAdress);
         this._socket.onopen = this.onOpen;
         this._socket.onclose = this.onClose;

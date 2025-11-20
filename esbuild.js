@@ -6,6 +6,12 @@ const polyfill = require('@esbuild-plugins/node-globals-polyfill');
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
 
+// collect targets, supporting: main, web
+const targets = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
+if (targets.length === 0) {
+	targets.push('main'); // default to main
+}
+
 /**
  * This plugin hooks into the build process to print errors in a format that the problem matcher in
  * Visual Studio Code can understand.
@@ -57,27 +63,24 @@ const testBundlePlugin = {
 	}
 };
 
-async function main() {
-	const ctx = await esbuild.context({
-		entryPoints: [
-			'src/web/extension.ts',
-			'src/web/test/suite/extensionTests.ts',
-            "./src/web/webviews/*"
+function getMainBuildOptions() {
+    return {
+        entryPoints: [
+			'src/main/extension.ts'
 		],
-		bundle: true,
+        bundle: true,
 		format: 'cjs',
 		minify: production,
 		sourcemap: !production,
 		sourcesContent: false,
-		platform: 'browser',
-		outdir: 'dist/web',
-		external: ['vscode'],
-		logLevel: 'silent',
-		// Node.js global to browser globalThis
-		define: {
+        platform: 'node',
+		outdir: 'dist/main',
+        minify: false,
+        external: ['vscode'],
+		logLevel: 'info',
+        define: {
 			global: 'globalThis',
 		},
-
 		plugins: [
 			polyfill.NodeGlobalsPolyfillPlugin({
 				process: true,
@@ -86,16 +89,60 @@ async function main() {
 			testBundlePlugin,
 			esbuildProblemMatcherPlugin, /* add to the end of plugins array */
 		],
-	});
+    };
+}
+
+function getWebBuildOptions() {
+    return {
+        entryPoints: [
+			'src/web/extension.ts',
+			'src/web/test/suite/extensionTests.ts',
+            "./src/web/webviews/*"
+		],
+        bundle: true,
+		format: 'cjs',
+		minify: production,
+		sourcemap: !production,
+		sourcesContent: false,
+		platform: 'browser',
+		outdir: 'dist/web',
+		external: ['vscode'],
+		logLevel: 'info',
+		// Node.js global to browser globalThis
+		define: {
+			global: 'globalThis',
+		},
+		plugins: [
+			polyfill.NodeGlobalsPolyfillPlugin({
+				process: true,
+				buffer: true,
+			}),
+			testBundlePlugin,
+			esbuildProblemMatcherPlugin, /* add to the end of plugins array */
+		],
+	};
+}
+
+async function build() {
+	let buildOptions = [];
+	if(targets.includes("web")) {
+		buildOptions.push(getWebBuildOptions());
+		buildOptions.push(getMainBuildOptions());
+	} else if(targets.includes("main")) {
+		buildOptions.push(getMainBuildOptions());
+	}
+	
+	const builds = await Promise.all(buildOptions.map(opts => esbuild.context(opts)));
+
 	if (watch) {
-		await ctx.watch();
+		await Promise.all(builds.map(build => build.watch()));
 	} else {
-		await ctx.rebuild();
-		await ctx.dispose();
+		await Promise.all(builds.map(build => build.rebuild()));
+		await Promise.all(builds.map(build => build.dispose()));
 	}
 }
 
-main().catch(e => {
+build().catch(e => {
 	console.error(e);
 	process.exit(1);
 });

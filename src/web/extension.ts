@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('setContext', 'riot-web-extension.flashingDevices', []);
     
     console.log(`Host: ${self.location.hostname}`);
-    const commandSocket = new CommandSocket(self.location.hostname);
+    const commandSocket = new CommandSocket(self.location);
 
     //Commands
     context.subscriptions.push(
