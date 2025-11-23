@@ -6,12 +6,6 @@ const polyfill = require('@esbuild-plugins/node-globals-polyfill');
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
 
-// collect targets, supporting: main, web
-const targets = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
-if (targets.length === 0) {
-	targets.push('main'); // default to main
-}
-
 /**
  * This plugin hooks into the build process to print errors in a format that the problem matcher in
  * Visual Studio Code can understand.
@@ -63,34 +57,6 @@ const testBundlePlugin = {
 	}
 };
 
-function getMainBuildOptions() {
-    return {
-        entryPoints: [
-			'src/main/extension.ts'
-		],
-        bundle: true,
-		format: 'cjs',
-		minify: production,
-		sourcemap: !production,
-		sourcesContent: false,
-        platform: 'node',
-		outdir: 'dist/main',
-        external: ['vscode'],
-		logLevel: 'info',
-        define: {
-			global: 'globalThis',
-		},
-		plugins: [
-			polyfill.NodeGlobalsPolyfillPlugin({
-				process: true,
-				buffer: true,
-			}),
-			testBundlePlugin,
-			esbuildProblemMatcherPlugin, /* add to the end of plugins array */
-		],
-    };
-}
-
 function getWebBuildOptions() {
     return {
         entryPoints: [
@@ -123,21 +89,13 @@ function getWebBuildOptions() {
 }
 
 async function build() {
-	let buildOptions = [];
-	if(targets.includes("web")) {
-		buildOptions.push(getWebBuildOptions());
-		buildOptions.push(getMainBuildOptions());
-	} else if(targets.includes("main")) {
-		buildOptions.push(getMainBuildOptions());
-	}
-	
-	const builds = await Promise.all(buildOptions.map(opts => esbuild.context(opts)));
+	const build = await esbuild.context(getWebBuildOptions());
 
 	if (watch) {
-		await Promise.all(builds.map(build => build.watch()));
+		await build.watch();
 	} else {
-		await Promise.all(builds.map(build => build.rebuild()));
-		await Promise.all(builds.map(build => build.dispose()));
+		await build.rebuild();
+		await build.dispose();
 	}
 }
 
