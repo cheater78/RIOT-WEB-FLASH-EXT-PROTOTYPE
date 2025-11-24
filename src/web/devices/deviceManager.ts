@@ -4,14 +4,14 @@ import {DevicesProvider} from "../providers/devicesProvider";
 
 export class DeviceManager {
     private _devices: Device[] = [];
-
+    private _counter: number = 1;
     constructor(
         private _devicesProvider: DevicesProvider
     ) {
         //initialize Devices
         navigator.serial.getPorts().then((ports) => {
             for (const port of ports) {
-                this._devices.push(new SerialDevice(port, crypto.randomUUID()));
+                this._devices.push(new SerialDevice(port, crypto.randomUUID(), this._counter++));
             }
             this.updateDevicesProvider();
         });
@@ -31,7 +31,7 @@ export class DeviceManager {
             let newDeviceFound = false;
             for (const port of ports) {
                 if (this.includesPort(port) === undefined) {
-                    this._devices.push(new SerialDevice(port, crypto.randomUUID()));
+                    this._devices.push(new SerialDevice(port, crypto.randomUUID(), this._counter++));
                     newDeviceFound = true;
                 }
             }
@@ -47,7 +47,7 @@ export class DeviceManager {
             return;
         }
         if (port instanceof SerialPort) {
-            this._devices.push(new SerialDevice(port, crypto.randomUUID()));
+            this._devices.push(new SerialDevice(port, crypto.randomUUID(), this._counter++));
         }
         this.updateDevicesProvider();
     }
@@ -68,7 +68,12 @@ export class DeviceManager {
         this.updateDevicesProvider();
     }
 
+    refreshDevicesProvider() {
+        this._devicesProvider.refresh();
+    }
+
     private updateDevicesProvider() {
-        this._devicesProvider.refresh(this._devices);
+        this._devicesProvider.setDevices(this._devices);
+        this.refreshDevicesProvider();
     }
 }

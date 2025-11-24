@@ -29,7 +29,7 @@ export class TerminalProvider implements vscode.WebviewViewProvider, RiotTermina
         }
     } = {};
     private _selectedTab?: string;
-    constructor(private readonly basePath: vscode.Uri) {}
+    constructor(private readonly _basePath: vscode.Uri) {}
 
     openTab(device: Device) {
         if (device.contextValue in this._tabs) {
@@ -121,8 +121,8 @@ export class TerminalProvider implements vscode.WebviewViewProvider, RiotTermina
     }
 
     resolveWebviewView(webviewView: WebviewView, context: WebviewViewResolveContext, token: CancellationToken): Thenable<void> | void {
-        const css = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this.basePath, 'resources', 'css', 'terminal.css'));
-        const script = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this.basePath, 'dist', 'web', 'webviews', 'terminalWebview.js'));
+        const css = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this._basePath, 'resources', 'css', 'terminal.css'));
+        const script = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this._basePath, 'dist', 'web', 'webviews', 'terminalWebview.js'));
         webviewView.webview.options = {
             enableScripts: true,
         };

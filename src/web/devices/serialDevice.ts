@@ -13,9 +13,21 @@ export class SerialDevice extends Device {
     constructor(
         port: SerialPort,
         contextValue: string,
+        id: number,
     ) {
-        super(port, 'Device: ' + port.getInfo().usbVendorId + '|' + port.getInfo().usbProductId, contextValue);
+        super(port, 'Device ' + id, contextValue);
     }
+    getDescription(): string[] {
+        const port = this._port as SerialPort;
+        return [
+            'USBVendorID: ' + port.getInfo().usbVendorId,
+            'USBProductID: ' + port.getInfo().usbProductId,
+            'BluetoothServiceClassID: ' + (port.getInfo().bluetoothServiceClassId ? port.getInfo().bluetoothServiceClassId : 'Not specified'),
+            'CurrentWorkingDirectory: ' + (this.activeProject ? this.activeProject.name : 'Not specified'),
+        ];
+    }
+
+
     comparePort(port: SerialPort): boolean {
         return port === this._port;
     }

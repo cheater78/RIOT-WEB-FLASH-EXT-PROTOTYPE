@@ -124,21 +124,21 @@
       "view/item/context": [
         {
           "command": "riot-web-extension.device.remove",
-          "when": "view == riot-web-extension.view.devices"
+          "when": "view == riot-web-extension.view.devices && viewItem != description"
         },
         {
           "command": "riot-web-extension.device.selectProject",
-          "when": "view == riot-web-extension.view.devices",
+          "when": "view == riot-web-extension.view.devices && viewItem != description",
           "group": "inline"
         },
         {
           "command": "riot-web-extension.terminal.openTab",
-          "when": "view == riot-web-extension.view.devices && (viewItem not in riot-web-extension.context.openTabs)",
+          "when": "view == riot-web-extension.view.devices && viewItem != description && (viewItem not in riot-web-extension.context.openTabs)",
           "group": "inline"
         },
         {
           "command": "riot-web-extension.terminal.closeTab",
-          "when": "view == riot-web-extension.view.devices && (viewItem in riot-web-extension.context.openTabs)",
+          "when": "view == riot-web-extension.view.devices && viewItem != description && (viewItem in riot-web-extension.context.openTabs)",
           "group": "inline"
         }
       ],

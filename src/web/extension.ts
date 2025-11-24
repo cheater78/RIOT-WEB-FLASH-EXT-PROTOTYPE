@@ -16,9 +16,9 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('RIOT Web Extension activated');
 
     const devicesProvider = new DevicesProvider();
-    const terminalProvider = new TerminalProvider(context.extensionUri);
     const fileProvider = new FileProvider();
     const deviceManager = new DeviceManager(devicesProvider);
+    const terminalProvider = new TerminalProvider(context.extensionUri);
     navigator.serial.addEventListener('connect', (event) => {
         deviceManager.handleConnectEvent(event.target as SerialPort);
     });
@@ -84,6 +84,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showInformationMessage(
                 `Project '${pick.folder.name}' assigned to ${device.label}`
             );
+            deviceManager.refreshDevicesProvider();
         }),
 
         //open Tab
@@ -150,6 +151,7 @@ export function activate(context: vscode.ExtensionContext) {
                 loaderOptions: loaderOptions,
                 flashOptions: flashOptions
             });
+            deviceManager.refreshDevicesProvider();
         }),
     );
 

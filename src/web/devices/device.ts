@@ -13,8 +13,10 @@ export abstract class Device extends vscode.TreeItem {
         label: string,
         public readonly contextValue: string,
     ) {
-        super(label, vscode.TreeItemCollapsibleState.None);
+        super(label, vscode.TreeItemCollapsibleState.Collapsed);
     }
+
+    abstract getDescription(): string[];
 
     abstract comparePort(port: Port): boolean;
 
