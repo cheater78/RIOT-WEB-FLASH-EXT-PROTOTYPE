@@ -7,7 +7,7 @@ export type Command = {
 
 export class CommandSocket {
     private readonly _socket: WebSocket | undefined;
-    private readonly _port: number = 3001;
+    private readonly _port: number = 7777;
 
     constructor(
         protocol: string,
@@ -34,12 +34,13 @@ export class CommandSocket {
         this._socket.onclose = this.onClose;
         this._socket.onerror = this.onError;
         this._socket.onmessage = (event) => {
-            try {
-                const command: Command = JSON.parse(event.data) as Command;
-                this.onCommand(command);
-            } catch (e) {
-                this.onError("Invalid Message: " + event.data);
-            }
+            console.log("" + event.data);
+            //try {
+            //    //const command: Command = JSON.parse(event.data) as Command;
+            //    //this.onCommand(command);
+            //} catch (e) {
+            //    this.onError("Invalid Message: " + event.data);
+            //}
         };
     }
 
@@ -47,6 +48,10 @@ export class CommandSocket {
         if(this._socket !== undefined) {
             this._socket.close();
         }
+    }
+
+    public write(msg: string): void{
+        this._socket?.send(msg);
     }
 
     private onOpen(): void {

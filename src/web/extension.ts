@@ -169,9 +169,9 @@ export function activate(context: vscode.ExtensionContext) {
         //Close Websocket
         vscode.commands.registerCommand('riot-web-extension.websocket.close', () => {
             if (commandSocket) {
-                commandSocket.close();
+                commandSocket.write("1");
             }
-            commandSocket = undefined;
+            //commandSocket = undefined;
         })
     );
 

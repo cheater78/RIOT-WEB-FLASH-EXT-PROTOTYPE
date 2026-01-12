@@ -192,7 +192,7 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",
-    "@vscode/test-web": "^0.0.74",
+    "@vscode/test-web": "^0.0.78",
     "@vscode/vsce": "^3.7.0",
     "assert": "^2.1.0",
     "esbuild": "^0.25.12",
