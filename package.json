@@ -15,6 +15,11 @@
   "contributes": {
     "commands": [
       {
+        "command": "riot-web-extension.test.openTerminal",
+        "title": "Open new Terminal",
+        "icon": "$(terminal)"
+      },
+      {
         "command": "riot-web-extension.device.add",
         "title": "Add Serial Device",
         "icon": "$(add)"

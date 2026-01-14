@@ -1,4 +1,4 @@
-import vscode from "vscode";
+import vscode, {TerminalOptions} from "vscode";
 import {DevicesProvider} from "./providers/devicesProvider";
 import {Device} from "./devices/device";
 import {DeviceManager} from "./devices/deviceManager";
@@ -172,6 +172,15 @@ export function activate(context: vscode.ExtensionContext) {
                 commandSocket.write("1");
             }
             //commandSocket = undefined;
+        }),
+
+        //Test
+        vscode.commands.registerCommand('riot-web-extension.test.openTerminal', async () => {
+            const terminal = vscode.window.createTerminal({
+                name: await vscode.window.showInputBox({title: 'Input name of new Terminal'}),
+            } as TerminalOptions);
+            terminal.show();
+            vscode.window.showInformationMessage('Process ID of created Terminal is: ' + terminal.processId);
         })
     );
 
